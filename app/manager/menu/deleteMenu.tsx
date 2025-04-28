@@ -82,7 +82,7 @@ const DeleteMenu = ({ selectedMenu }: { selectedMenu: Menu }) => {
                                Cancel
                            </ButtonDanger>
                            <ButtonPrimary type="submit">
-                               Save
+                               Delete
                            </ButtonPrimary>
                        </div>
                    </div>

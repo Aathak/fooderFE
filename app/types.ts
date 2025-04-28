@@ -43,6 +43,8 @@ export interface ICart {
     menuId: number,
     name: string,
     price: number,
+    category: string,
+    picture: string,
     quantity: number,
     note: string
 }
