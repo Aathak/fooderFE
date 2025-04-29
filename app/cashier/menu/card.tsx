@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { BASE_API_URL } from "@/global"
 import { Menu } from "@/app/types";
 import { getCookie, storeCookie, removeCookie } from "@/lib/client-cookie";
 
@@ -17,6 +18,7 @@ const Cart = ({ cart, setCart }: CartProps) => {
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "QRIS">("CASH");
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const url = `${BASE_API_URL}/order`
 
   // Load cart from cookie when component mounts
   useEffect(() => {
@@ -63,57 +65,54 @@ const Cart = ({ cart, setCart }: CartProps) => {
     setShowForm(true);
   };
 
-  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+  const handleCheckoutSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    
-    if (!customerName.trim() || !tableNumber.trim()) {
-      alert("Harap isi nama dan nomor meja");
-      return;
-    }
-    
     setIsProcessing(true);
     
     try {
-      // Prepare order data for API
+      const token = getCookie("token");
+      
+      // Format the data to match backend schema expectations
       const orderData = {
-        customer: customerName,
+        customer: customerName, // Changed from Customer to customer
         table_number: tableNumber,
         payment_method: paymentMethod,
-        total_price: Math.round(getTotal() * 1.05), // Including 5% service
-        items: Object.values(cart).map(({ item, quantity }) => ({
-          menu_id: item.id,
-          name: item.name,
+        status: "NEW",
+        // Changed from OrderList to orderlists (lowercase, matching backend)
+        orderlists: Object.values(cart).map(({ item, quantity }) => ({
+          menuId: item.id,
           quantity: quantity,
-          price: item.price
+          note: "Regular order" // Required by schema
         }))
       };
       
-      // Store order in history cookie for transaction page
-      const orderHistory = JSON.parse(getCookie("orderHistory") || "[]");
-      const newOrder = {
-        ...orderData,
-        orderId: Math.random().toString(36).substring(2, 10).toUpperCase(),
-        status: "NEW",
-        createdAt: new Date().toISOString()
-      };
+      console.log("Sending order data:", orderData);
       
-      orderHistory.push(newOrder);
-      storeCookie("orderHistory", JSON.stringify(orderHistory));
+      const response = await fetch(`${BASE_API_URL}/order/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(orderData)
+      });
       
-      // Generate fake order ID for display
-      setOrderId(newOrder.orderId);
+      const result = await response.json();
+      console.log("Order response:", result);
       
-      // Clear cart after successful order
-      setCart({});
-      removeCookie("cart");
-      
-      setOrderComplete(true);
+      if (result.status) {
+        // Success! Clear cart and show success message
+        setCart({});
+        setOrderComplete(true);
+        setOrderId(result.data.uuid || "");
+      } else {
+        alert("Order failed: " + result.message);
+      }
     } catch (error) {
-      console.error("Error creating order:", error);
-      alert("Gagal membuat pesanan, silakan coba lagi.");
+      console.error("Error submitting order:", error);
+      alert("Error submitting order");
     } finally {
       setIsProcessing(false);
-      setShowForm(false);
     }
   };
 
@@ -139,7 +138,7 @@ const Cart = ({ cart, setCart }: CartProps) => {
             </svg>
           </div>
           <h4 className="text-xl font-bold text-gray-800 mb-2">Pesanan Berhasil!</h4>
-          <p className="text-gray-600 mb-1">Nomor Pesanan: {orderId}</p>
+          <p className="text-gray-600 mb-1">Nomor Pesanan: {orderId || "N/A"}</p>
           <p className="text-gray-600 mb-4">Metode Pembayaran: {paymentMethod}</p>
           <p className="text-sm text-gray-500 mb-6">Pesanan Anda sedang diproses dan akan segera diantar ke meja {tableNumber}</p>
           <div className="flex justify-center space-x-4">
@@ -150,7 +149,7 @@ const Cart = ({ cart, setCart }: CartProps) => {
               Pesan Lagi
             </button>
             <button 
-              onClick={() => window.location.href = "/transaction"}
+              onClick={() => window.location.href = "/cashier/transaksi"}
               className="bg-gray-100 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Lihat Transaksi
