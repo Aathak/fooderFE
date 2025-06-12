@@ -154,7 +154,7 @@ const LoginPage = () => {
                 className="cursor-pointer p-3 text-black bg-white rounded-r-md"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? (
+                {showPassword ? ( 
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"

@@ -1,13 +1,13 @@
-import Cookies from "js-cookie"
+import Cookies from "js-cookie";
 
 export const storeCookie = (key: string, plainText: string) => {
-    Cookies.set(key, plainText, {expires: 1}) //menyimpan data ke cookie
+    Cookies.set(key, plainText, { expires: 1 })
+}
 
-} 
 export const getCookie = (key: string) => {
-    return Cookies.get(key) //mendapat data dari cookie
+    return Cookies.get(key)
 }
 
 export const removeCookie = (key: string) => {
-    Cookies.remove(key) //menghapus data dr cookie
+    Cookies.remove(key)
 }
