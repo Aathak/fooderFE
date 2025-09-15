@@ -1,9 +1,8 @@
 "use client";
 
-import { BASE_API_URL } from "@/global"; /* url dari backend kita */
+import { AlertSuccess } from "@/components/alert";
 import { storeCookie } from "@/lib/client-cookie"; /* cookie: storage punyanya browser (cookie, local storage, session storage) */
 import axios from "axios"; /* untuk fetching data, untuk bisa menjalankan backend di frontend */
-import Image from "next/image"; /*  */
 import { useRouter } from "next/navigation"; /* untuk routing, untuk redirect setelah login karena akan diarahkan ke halaman lain */
 import {
   FormEvent,
@@ -17,11 +16,14 @@ import {
 interface loginResponse {
   status: boolean;
   logged: boolean;
-  data: {
-    id: string;
-    name: string;
+  user: {
+    id: string,
+    username: string;
     email: string;
-    role: string;
+    firstName: string;
+    lastName: string;
+    gender: string;
+    image: string;
   };
   message: string;
   token: string;
@@ -29,7 +31,7 @@ interface loginResponse {
 
 const LoginPage = () => {
   const router = useRouter();
-  const [email, setEmail] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
@@ -39,8 +41,8 @@ const LoginPage = () => {
     //pake async biar bisa login bebarengan, ga harus nunggu yang sebelumnya selesai
     try {
       e.preventDefault(); /* agar saat di refresh data ngga hilang */
-      const url = `${BASE_API_URL}/user/login`;
-      const payload = JSON.stringify({ email: email, password });
+      const url = `https://dummyjson.com/auth/login`;
+      const payload = JSON.stringify({ username, password });
       const { data } = await axios.post<loginResponse>(url, payload, {
         headers: { "Content-Type": "application/json" },
       });
@@ -51,15 +53,7 @@ const LoginPage = () => {
           type: "success",
           autoClose: 2000,
         });
-        storeCookie("token", data.token);
-        storeCookie("id", data.data.id);
-        storeCookie("name", data.data.name);
-        storeCookie("role", data.data.role);
-        let role = data.data.role;
-        if (role === `MANAGER`)
-          setTimeout(() => router.replace(`/manager/dashboard`), 1000);
-        else if (role === `CHASIER`)
-          setTimeout(() => router.replace(`/cashier/dashboard`), 1000);
+        storeCookie("id", data.user.id);
       } else
         toast(data.message, {
           hideProgressBar: true,
@@ -76,30 +70,19 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="w-screen h-screen bg-login bg-cover">
+    <div className="w-screen h-screen bg-gray-900 bg-cover">
       <ToastContainer containerId={`toastLogin`} />
       <div className="w-full h-full bg-backdrop-login flex justify-center items-center p-5">
-        <div className="w-full md:w-4/12 lg:w-5/10 min-h-[400px] rounded-xl bg-white p-5 flex flex-col items-center relative justify-center bg-opacity-30 backdrop-blur-md border">
-          <div className="absolute bottom-0 left-0 w-full py-2 text-center">
-            <small className="text-white">Copyright @2025</small>
-          </div>
-          <Image
-            alt="fooder"
-            width={150}
-            height={100}
-            src={`/image/logo.jpg`}
-            className="rounded-full h-auto -scroll-my-10 mb-4"
-          />
-          <h4 className="text-2xl uppercase font-semibold text-primary mb-4 text-white">
-            FOODER
+        <div className="w-full md:w-4/12 lg:w-5/10 min-h-[400px] rounded-xl bg-gray-800 p-5 flex flex-col items-center relative justify-center">
+          <h4 className="text-2xl uppercase font-semibold text-primary mb-2 text-white">
+            ListIn!
           </h4>
-          <span className="text-sm text-white font-medium text-center mb-4">
-            Welcome Manager and Cashier
+          <span className="text-sm text-white font-medium text-center mb-2">
+            yuk logginnnn
           </span>
-
           <form onSubmit={handleSubmit} className="w-full">
             <div className="flex w-full my-4">
-              <div className="bg-pink-900 text-white bg-primary rounded-l-md p-3">
+              <div className="bg-indigo-900 text-white bg-primary rounded-l-md p-3">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -118,15 +101,15 @@ const LoginPage = () => {
               <input
                 type="text"
                 className="border p-2 grow rounded-r-md focus:outline-none focus:ring-primary focus:border-primary text-slate-950"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                id={`email`}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="username"
+                id={`username`}
               />
             </div>
 
             <div className="flex w-full my-4">
-              <div className="bg-pink-900 text-white bg-primary rounded-l-md p-3">
+              <div className="bg-indigo-900 text-white bg-primary rounded-l-md p-3">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -196,7 +179,8 @@ const LoginPage = () => {
             <div className="my-10">
               <button
                 type="submit"
-                className="bg-primary hover:bg-primary uppercase w-full p-2 rounded-md bg-pink-900 text-white"
+                className="bg-primary hover:bg-primary uppercase w-full p-2 rounded-md bg-indigo-900 text-white"
+                onClick={() => router.push(`/SongPlaylist`)}
               >
                 Login
               </button>
